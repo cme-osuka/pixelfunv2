@@ -7,14 +7,13 @@ let socket;
 
 function Box(props) {
   function changeColor() {
-    axios.post("https://colors.osuka.dev/grid", {
-      user: "Oscar",
+    socket.emit("update", {
       color: props.selectedColor,
       position: {
         x: props.x,
-        y: props.y
-      }
-    })
+        y: props.y,
+      },
+    });
   }
 
   return (
@@ -32,32 +31,48 @@ function Box(props) {
 
 function App() {
   const [grid, setGrid] = useState(null);
-  const [color, setColor] = useState("#f3f3f3")
+  const [color, setColor] = useState("#f3f3f3");
 
   useEffect(() => {
     socket = io("http://localhost:4000");
 
     socket.on("connect", () => {
       socket.emit("ready");
-    })
+    });
 
     socket.on("initial_state", (data) => {
-      setGrid(data)
-    })
+      setGrid(data);
+    });
+
+    socket.on("updated_state", (data) => {
+      console.log("updated state");
+      setGrid(data);
+    });
   }, []);
 
   if (!grid) return <p>Loading...</p>;
 
   return (
-    <div className="App">
+    <div className="App"  >
       <header className="App-header">
-        <input type="color" value={color} onChange={e => setColor(e.target.value)} />
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+        />
 
         {grid.map((y, yPos) => {
           return (
             <div style={{ display: "flex" }}>
               {y.map((x, xPos) => {
-                return <Box color={x.color} x={xPos} y={yPos} selectedColor={color} />;
+                return (
+                  <Box
+                    color={x.color}
+                    x={xPos}
+                    y={yPos}
+                    selectedColor={color}
+                  />
+                );
               })}
             </div>
           );

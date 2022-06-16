@@ -27,7 +27,6 @@ let state = initialState();
 
 // Socket listeners
 io.on("connection", (socket) => {
-
   // Event: "ready"
   socket.on("ready", () => {
     socket.emit("initial_state", state)
@@ -36,7 +35,16 @@ io.on("connection", (socket) => {
   // Event: "update"
   socket.on("update", (data) => {
     const color = data.color;
-    
+    const { x, y } = data.position;
+    const user = socket.id;
+
+    state[y][x] = {
+      id: state[y][x].id, // Nuvarande id't på rutan
+      color: color,
+      lastChangedBy: user
+    }
+
+    io.emit("updated_state", state);
   })
 })
 
