@@ -50,17 +50,34 @@ function App() {
     });
   }, []);
 
+  function createRoom() {
+    const roomName = prompt("Vad vill du rummet ska heta?");
+    
+    socket.emit("create_room", roomName);
+    // emitta roomName > "create_room"
+  }
+
+  function joinRoom() {
+    const roomName = prompt("Vilket rum vill du gå med i?");
+
+    socket.emit("join_room", roomName);
+    // emitta roomName > "join_room"
+  }
+
   if (!grid) return <p>Loading...</p>;
 
   return (
     <div className="App"  >
       <header className="App-header">
+
+        <button onClick={createRoom}>Create</button>
+        <button onClick={joinRoom}>Join</button>
+
         <input
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
         />
-
         {grid.map((y, yPos) => {
           return (
             <div style={{ display: "flex" }}>

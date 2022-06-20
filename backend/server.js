@@ -23,29 +23,64 @@ const initialState = () =>
     return new Array(20).fill("").map(initialBox);
   });
 
-let state = initialState();
+const rooms = {
+  default: {
+    name: "Default room",
+    state: initialState(),
+  },
+};
 
 // Socket listeners
 io.on("connection", (socket) => {
   // Event: "ready"
   socket.on("ready", () => {
-    socket.emit("initial_state", state)
+    // Sätt användarens rum till default
+    socket.join("default");
+
+    socket.emit("initial_state", rooms["default"].state);
+  });
+
+  // room = "potatislandet"
+  socket.on("create_room", (room) => {
+    rooms[room] = {
+      name: room,
+      state: initialState()
+    }
+
+    console.log(rooms);
   })
+
+  socket.on("join_room", (room) => {
+    //["socket.id", "default"]
+    const joinedRooms = Array.from(socket.rooms);
+    const roomToLeave = joinedRooms[1]; // "default"
+    socket.leave(roomToLeave)
+
+    // Gå med i nya rummet 
+    socket.join(room);
+    io.to(room).emit("updated_state", rooms[room].state);
+    console.log(`${socket.id} joined room: ${room}`);
+  });
 
   // Event: "update"
   socket.on("update", (data) => {
+    const joinedRooms = Array.from(socket.rooms);
+    const currentRoom = joinedRooms[1]; // FEA21
+    const currentState = rooms[currentRoom].state;
+
     const color = data.color;
     const { x, y } = data.position;
     const user = socket.id;
 
-    state[y][x] = {
-      id: state[y][x].id, // Nuvarande id't på rutan
+    currentState[y][x] = {
+      id: currentState[y][x].id, // Nuvarande id't på rutan
       color: color,
-      lastChangedBy: user
-    }
+      lastChangedBy: user,
+    };
 
-    io.emit("updated_state", state);
-  })
-})
+    io.to(currentRoom).emit("updated_state", currentState);
+  });
+});
 
 io.listen(4000);
+console.log("Servern kör på port 4000");
